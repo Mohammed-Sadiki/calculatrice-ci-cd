@@ -8,49 +8,91 @@ on:
     branches: [main]
 
 jobs:
+
+  # JOB 1 : Vérification du style du code
   lint:
     name: Lint (style du code)
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install flake8
-      - run: flake8 . --max-line-length=100
 
+      - name: Installer Flake8
+        run: python -m pip install flake8
+
+      - name: Vérifier le style du code
+        run: python -m flake8 . --max-line-length=100
+
+
+  # JOB 2 : Tests automatiques
   test:
     name: Tests automatiques
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: pytest -v
 
+      - name: Installer les dépendances
+        run: python -m pip install -r requirements.txt
+
+      - name: Installer Pytest
+        run: python -m pip install pytest
+
+      - name: Exécuter les tests
+        run: python -m pytest -v
+
+
+  # JOB 3 : Construction du paquet
   build:
     name: Construction du paquet
     runs-on: ubuntu-latest
     needs: [lint, test]
+
     steps:
-      - uses: actions/checkout@v4
-      - run: mkdir dist && cp calculatrice.py dist/
-      - uses: actions/upload-artifact@v4
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Créer le dossier dist
+        run: mkdir -p dist
+
+      - name: Copier le fichier Python
+        run: cp calculatrice.py dist/
+
+      - name: Publier l'artefact
+        uses: actions/upload-artifact@v4
         with:
           name: calculatrice-paquet
           path: dist/
 
+
+  # JOB 4 : Déploiement simulé
   deploy:
     name: Déploiement (simulé)
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main'
+
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Télécharger l'artefact
+        uses: actions/download-artifact@v4
         with:
           name: calculatrice-paquet
           path: dist/
-      - run: ls -l dist/
-      - run: echo "Application déployée avec succès !"
+
+      - name: Afficher les fichiers
+        run: ls -l dist/
+
+      - name: Simuler le déploiement
+        run: echo "Application déployée avec succès !"
